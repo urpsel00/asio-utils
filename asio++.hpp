@@ -1,5 +1,7 @@
 #pragma once
 
+#define _WIN32_WINNT 0x0601
+
 #include <asio.hpp>
 #include <asio/ssl.hpp>
 
@@ -56,8 +58,13 @@ namespace asio {
     ) {
         uint32_t length = data->size();
         
-        async_write_header<uint32_t>(socket, length, callback);
-        async_write_full(socket, data, callback);
+        async_write_header<uint32_t>(socket, length, [socket, data, callback](std::error_code ec) {
+            if (ec) {
+                callback(ec);
+            } else {
+                async_write_full(socket, data, callback);
+            }
+        });
     }
 
     void async_read_full(
@@ -163,8 +170,13 @@ namespace asio {
     ) {
         uint32_t length = data->size();
         
-        async_write_header_ssl<uint32_t>(stream, length, callback);
-        async_write_full_ssl(stream, data, callback);
+        async_write_header_ssl<uint32_t>(stream, length, [stream, data, callback](std::error_code ec) {
+            if (ec) {
+                callback(ec);
+            } else {
+                async_write_full_ssl(stream, data, callback);
+            }
+        });
     }
 
     void async_read_full_ssl(
